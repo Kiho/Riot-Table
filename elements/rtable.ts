@@ -3,9 +3,8 @@
 
 @template("<raw><span></span></raw>")
 class Raw extends Riot.Element {
-    constructor(opts) {
-        super();
-        this.root.innerHTML = opts.r;
+    mounted() {
+        this.root.innerHTML = this.opts.r;
     }
 }
 
@@ -34,6 +33,7 @@ interface Sort {
 interface ColHeader {
     colName: string;
     sort: string;
+    title: string;
 }
 
 @template("elements/rtable.html")
@@ -51,28 +51,25 @@ class Rtable extends Riot.Element {
 
     styles: Styles;
 
-    constructor(opts) {
-        super();
-        this.on("mount", () => {
-            this.init();
-        });
+    mounted() {
+        this.init(this.opts);
     }
 
-    init() {
-        var styles = this._convertOpts(this.opts.styles, true);
+    init(opts) {
+        var styles = this._convertOpts(opts.styles, true);
         this.styles = <Styles>this._mergeOptions(this.styles, styles);
 
-        this._filter = this.opts.filter || this._filter;
+        this._filter = opts.filter || this._filter;
         this._filter = this._convertOpts(this._filter, false);
 
-        this._sort = this.opts.sort || { 'column': '', 'order': '' };
+        this._sort = opts.sort || { 'column': '', 'order': '' };
         this._sort = this._convertOpts(this._sort, false);
 
-        this._colTitle = this.opts.coltitle || this._colTitle;
+        this._colTitle = opts.coltitle || this._colTitle;
         this._colTitle = this._convertOpts(this._colTitle, false);
 
-        if (this.opts['colexcluded']) {
-            this._colExcluded = this.opts['colexcluded'].replace(/ /g, '').split(',');
+        if (opts['colexcluded']) {
+            this._colExcluded = opts['colexcluded'].replace(/ /g, '').split(',');
         }
 
         if (this.styles.activeLineClass === '') {
@@ -80,7 +77,7 @@ class Rtable extends Riot.Element {
             this._lineOver = null;
         }
 
-        if ((this.opts.autoload || 'yes') === 'yes') {
+        if ((opts.autoload || 'yes') === 'yes') {
             this.start(null, null);
         }
 
@@ -182,7 +179,8 @@ class Rtable extends Riot.Element {
 
         var ordre = this._sort.order;
         var colonne = this._sort.column;
-        this._activeColSort = this._sort.column;
+        this._activeColSort = colonne;
+
         this._data = this._data.sort((elem1, elem2) => {
             var e1 = elem1[colonne];
             var e2 = elem2[colonne];
@@ -232,7 +230,8 @@ class Rtable extends Riot.Element {
     }
 
     private _lineOver(e) {
-        this._lineFocus = e.item.i;
+        var p = <Rtable>this.parent;
+        p._lineFocus = e.item.i;
     }
 
     private _activeLine(i) {
@@ -250,9 +249,8 @@ class Rtable extends Riot.Element {
         if (!sortOrder) {
             return;
         }
-        var s0: any = sortOrder[0];
-        sortOrder = s0.sort || 'Up';
-        this.sortTable({ column: col, order: sortOrder });
+        var p = <Rtable>this.parent;
+        p.sortTable({ column: col, order: sortOrder[0].sort || 'Up' });
     }
 
     //_tableau = function() {

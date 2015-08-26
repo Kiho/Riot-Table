@@ -16,10 +16,12 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 var Raw = (function (_super) {
     __extends(Raw, _super);
-    function Raw(opts) {
-        _super.call(this);
-        this.root.innerHTML = opts.r;
+    function Raw() {
+        _super.apply(this, arguments);
     }
+    Raw.prototype.mounted = function () {
+        this.root.innerHTML = this.opts.r;
+    };
     Raw = __decorate([
         template("<raw><span></span></raw>")
     ], Raw);
@@ -28,9 +30,8 @@ var Raw = (function (_super) {
 Raw.register();
 var Rtable = (function (_super) {
     __extends(Rtable, _super);
-    function Rtable(opts) {
-        var _this = this;
-        _super.call(this);
+    function Rtable() {
+        _super.apply(this, arguments);
         this._data = [];
         this._data_bak = [];
         this._colExcluded = [];
@@ -39,27 +40,27 @@ var Rtable = (function (_super) {
         this._colTitle = {};
         this._lineFocus = -1;
         this._activeColSort = '';
-        this.on("mount", function () {
-            _this.init();
-        });
     }
-    Rtable.prototype.init = function () {
-        var styles = this._convertOpts(this.opts.styles, true);
+    Rtable.prototype.mounted = function () {
+        this.init(this.opts);
+    };
+    Rtable.prototype.init = function (opts) {
+        var styles = this._convertOpts(opts.styles, true);
         this.styles = this._mergeOptions(this.styles, styles);
-        this._filter = this.opts.filter || this._filter;
+        this._filter = opts.filter || this._filter;
         this._filter = this._convertOpts(this._filter, false);
-        this._sort = this.opts.sort || { 'column': '', 'order': '' };
+        this._sort = opts.sort || { 'column': '', 'order': '' };
         this._sort = this._convertOpts(this._sort, false);
-        this._colTitle = this.opts.coltitle || this._colTitle;
+        this._colTitle = opts.coltitle || this._colTitle;
         this._colTitle = this._convertOpts(this._colTitle, false);
-        if (this.opts['colexcluded']) {
-            this._colExcluded = this.opts['colexcluded'].replace(/ /g, '').split(',');
+        if (opts['colexcluded']) {
+            this._colExcluded = opts['colexcluded'].replace(/ /g, '').split(',');
         }
         if (this.styles.activeLineClass === '') {
             this._activeLine = null;
             this._lineOver = null;
         }
-        if ((this.opts.autoload || 'yes') === 'yes') {
+        if ((opts.autoload || 'yes') === 'yes') {
             this.start(null, null);
         }
         return this;
@@ -150,7 +151,7 @@ var Rtable = (function (_super) {
         }
         var ordre = this._sort.order;
         var colonne = this._sort.column;
-        this._activeColSort = this._sort.column;
+        this._activeColSort = colonne;
         this._data = this._data.sort(function (elem1, elem2) {
             var e1 = elem1[colonne];
             var e2 = elem2[colonne];
@@ -199,7 +200,8 @@ var Rtable = (function (_super) {
         });
     };
     Rtable.prototype._lineOver = function (e) {
-        this._lineFocus = e.item.i;
+        var p = this.parent;
+        p._lineFocus = e.item.i;
     };
     Rtable.prototype._activeLine = function (i) {
         return (i === this._lineFocus ? this.styles.activeLineClass : '');
@@ -213,9 +215,8 @@ var Rtable = (function (_super) {
         if (!sortOrder) {
             return;
         }
-        var s0 = sortOrder[0];
-        sortOrder = s0.sort || 'Up';
-        this.sortTable({ column: col, order: sortOrder });
+        var p = this.parent;
+        p.sortTable({ column: col, order: sortOrder[0].sort || 'Up' });
     };
     //_tableau = function() {
     //    var indice = -1;
