@@ -21,8 +21,7 @@ Requirements
 -
 Obviously, **&lt;rtable\>** needs **Riot.js** to run.
 It needs also the **underscore.js** library.
--
-Riot for TypeScript(https://github.com/nippur72/RiotTS) 
+[Riot for TypeScript](https://github.com/nippur72/RiotTS) 
 
 Basic Example
 -
