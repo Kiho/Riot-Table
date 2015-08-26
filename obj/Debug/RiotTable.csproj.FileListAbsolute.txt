@@ -1,0 +1,6 @@
+C:\Users\Kiho\github\Riot-Table\obj\Debug\RiotTable.csprojResolveAssemblyReference.cache
+C:\Users\Kiho\github\Riot-Table\bin\RiotTable.dll.config
+C:\Users\Kiho\github\Riot-Table\bin\RiotTable.dll
+C:\Users\Kiho\github\Riot-Table\bin\RiotTable.pdb
+C:\Users\Kiho\github\Riot-Table\obj\Debug\RiotTable.dll
+C:\Users\Kiho\github\Riot-Table\obj\Debug\RiotTable.pdb

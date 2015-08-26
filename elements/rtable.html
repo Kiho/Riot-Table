@@ -1,0 +1,23 @@
+﻿<rtable>
+    <div class="rtable" id="rtable-{opts['id']}">
+        <yield />
+        <table class="{this.styles.tableClass}" id="table-{opts['id']}">
+            <thead>
+                <tr class="{this.styles.colHeaderClass}">
+                    <th class="header-{c.colName} header-sort{c.sort}" each={c in this._colHeader} data-column="{c.colName}" onclick="{this.parent._click_sort}"><raw r="{c.title}"></raw> <span class="{parent.styles['sort'+c.sort+'Class']}"></span>  </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr each={ elem, i in this._data } class="{this.parent._activeLine(i)}" onmouseover="{parent._lineOver }">
+                    <td class="col-{d} {this.parent.parent._isActiveSort(d)}" each={ d, val in this.parent._colList }>{elem[d]}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <style>
+        rtable table th {
+            cursor: pointer;
+        }
+    </style>
+</rtable>
