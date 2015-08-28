@@ -1,0 +1,7 @@
+﻿<paginator>
+    <ul>
+        <li class="{ disabled: current==1 }" onclick={ prev }>&lt;</li>
+        <li each={ num in range } class="{ active: parent.current==num }" onclick={ parent.page }>{ num }</li>
+        <li class="{ disabled: current==total }" onclick={ next }>&gt;</li>
+    </ul>
+</paginator> 

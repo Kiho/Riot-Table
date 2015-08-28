@@ -1,5 +1,3 @@
-var liste1 = 
-
 [
   {
     "id": 1,
@@ -3901,4 +3899,4 @@ var liste1 =
     "phone": "+1 (805) 547-3798",
     "address": "803 Varick Avenue, Edgewater, Kentucky, 6167"
   }
-];
+]
