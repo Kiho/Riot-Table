@@ -2,6 +2,7 @@
 /// <reference path="../bower_components/riot-ts/riot-ts.d.ts" />
 
 module RiotTable {
+
     @template("<raw><span></span></raw>")
     class Raw extends Riot.Element {
         mounted() {
@@ -11,7 +12,7 @@ module RiotTable {
 
     Raw.register();
 
-    interface Styles {
+    export interface Styles {
         tableClass: string;
         colHeaderClass: string;
         activeLineClass: string;
@@ -75,24 +76,6 @@ module RiotTable {
         return obj3;
     }
 
-    //function deepCopy1(obj) {
-    //    if (Object.prototype.toString.call(obj) === '[object Array]') {
-    //        var out = [], i = 0, len = obj.length;
-    //        for (; i < len; i++) {
-    //            out[i] = arguments.callee(obj[i]);
-    //        }
-    //        return out;
-    //    }
-    //    if (typeof obj === 'object') {
-    //        var out1 = {}, j;
-    //        for (j in obj) {
-    //            out1[j] = arguments.callee(obj[j]);
-    //        }
-    //        return out1;
-    //    }
-    //    return obj;
-    //}
-
     function deepCopy(obj) {
         return _.map(obj, _.clone);
     }
@@ -109,21 +92,30 @@ module RiotTable {
         private _colTitle = {};
         private _lineFocus = -1;
         private _activeColSort = '';
-
         private _self: Rtable;
-        private _styles: Styles;
 
+        styles: Styles;
         pager: Paginator;
 
         mounted() {
             this._self = this;
-            // this.init(this.opts);
+            if (this.opts.pager) {
+                this.opts.pager.setTable(this);
+            }
+            this.init();
+        }
+
+        getData() {
+            if (this.pager) {
+                return this.pager.items;
+            }
+            return this._data;
         }
 
         init() {
             var opts = this.opts;
-            var styles =  convertOpts(opts.styles, true);
-            this._styles = <Styles>mergeOptions(this._styles, styles);
+            var styles = convertOpts(opts.styles, true);
+            this.styles = <Styles>mergeOptions(this.styles, styles);
 
             this._filter = opts.filter || this._filter;
             this._filter = convertOpts(this._filter, false);
@@ -138,7 +130,7 @@ module RiotTable {
                 this._colExcluded = opts['colexcluded'].replace(/ /g, '').split(',');
             }
 
-            if (this._styles.activeLineClass === '') {
+            if (this.styles.activeLineClass === '') {
                 this._activeLine = null;
                 this._lineOver = null;
             }
@@ -157,7 +149,7 @@ module RiotTable {
                 this.loadData(data, cloneData || 'no');
             }
 
-            this.filterTable();
+            // this.filterTable();
             this.rebuildTable(this.opts['collist']);
             this.sortTable({ column: this._sort.column, order: this._sort.order });
             this.update();
@@ -246,8 +238,9 @@ module RiotTable {
             var ordre = this._sort.order;
             var colonne = this._sort.column;
             this._activeColSort = colonne;
-            var data = this.pager.items;
-            this.pager.items = data.sort((elem1, elem2) => {
+
+            var data = this.getData();
+            data = data.sort((elem1, elem2) => {
                 var e1 = elem1[colonne];
                 var e2 = elem2[colonne];
                 if (!isNaN(Number(e1)) && !isNaN(Number(e2))) {
@@ -275,13 +268,17 @@ module RiotTable {
                     this._colHeader[i].sort = '';
                 }
             }
-            this.pager.setRange();
+
+            if (this.pager) {
+                this.pager.items = data;
+                this.pager.setRange();
+            }
             return this;
         }
 
         private _isActiveSort(colName) {
             if (colName === this._activeColSort) {
-                return this._styles.activeSortClass || '';
+                return this.styles.activeSortClass || '';
             } else {
                 return '';
             }
@@ -298,10 +295,12 @@ module RiotTable {
 
         private _lineOver(e) {
             this._self._lineFocus = e.item.i;
+            //var p = <Rtable>this.parent;
+            //p._lineFocus = e.item.i;
         }
 
         private _activeLine(i) {
-            return (i === this._lineFocus ? this._styles.activeLineClass : '');
+            return (i === this._lineFocus ? this.styles.activeLineClass : '');
         }
 
         private _click_sort(e) {
@@ -314,6 +313,11 @@ module RiotTable {
             if (sortOrder) {
                 this._self.sortTable({ column: col, order: sortOrder[0].sort || 'Up' });
             }
+            //if (!sortOrder) {
+            //    return;
+            //}
+            //var p = <Rtable>this.parent;
+            //p.sortTable({ column: col, order: sortOrder[0].sort || 'Up' });
         }
 
         //_tableau = function() {

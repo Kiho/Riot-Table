@@ -68,23 +68,6 @@ var RiotTable;
         copyTo(obj2, obj3);
         return obj3;
     }
-    //function deepCopy1(obj) {
-    //    if (Object.prototype.toString.call(obj) === '[object Array]') {
-    //        var out = [], i = 0, len = obj.length;
-    //        for (; i < len; i++) {
-    //            out[i] = arguments.callee(obj[i]);
-    //        }
-    //        return out;
-    //    }
-    //    if (typeof obj === 'object') {
-    //        var out1 = {}, j;
-    //        for (j in obj) {
-    //            out1[j] = arguments.callee(obj[j]);
-    //        }
-    //        return out1;
-    //    }
-    //    return obj;
-    //}
     function deepCopy(obj) {
         return _.map(obj, _.clone);
     }
@@ -103,12 +86,21 @@ var RiotTable;
         }
         Rtable.prototype.mounted = function () {
             this._self = this;
-            // this.init(this.opts);
+            if (this.opts.pager) {
+                this.opts.pager.setTable(this);
+            }
+            this.init();
+        };
+        Rtable.prototype.getData = function () {
+            if (this.pager) {
+                return this.pager.items;
+            }
+            return this._data;
         };
         Rtable.prototype.init = function () {
             var opts = this.opts;
             var styles = convertOpts(opts.styles, true);
-            this._styles = mergeOptions(this._styles, styles);
+            this.styles = mergeOptions(this.styles, styles);
             this._filter = opts.filter || this._filter;
             this._filter = convertOpts(this._filter, false);
             this._sort = opts.sort || { 'column': '', 'order': '' };
@@ -118,7 +110,7 @@ var RiotTable;
             if (opts['colexcluded']) {
                 this._colExcluded = opts['colexcluded'].replace(/ /g, '').split(',');
             }
-            if (this._styles.activeLineClass === '') {
+            if (this.styles.activeLineClass === '') {
                 this._activeLine = null;
                 this._lineOver = null;
             }
@@ -134,7 +126,7 @@ var RiotTable;
             else {
                 this.loadData(data, cloneData || 'no');
             }
-            this.filterTable();
+            // this.filterTable();
             this.rebuildTable(this.opts['collist']);
             this.sortTable({ column: this._sort.column, order: this._sort.order });
             this.update();
@@ -214,8 +206,8 @@ var RiotTable;
             var ordre = this._sort.order;
             var colonne = this._sort.column;
             this._activeColSort = colonne;
-            var data = this.pager.items;
-            this.pager.items = data.sort(function (elem1, elem2) {
+            var data = this.getData();
+            data = data.sort(function (elem1, elem2) {
                 var e1 = elem1[colonne];
                 var e2 = elem2[colonne];
                 if (!isNaN(Number(e1)) && !isNaN(Number(e2))) {
@@ -244,12 +236,15 @@ var RiotTable;
                     this._colHeader[i].sort = '';
                 }
             }
-            this.pager.setRange();
+            if (this.pager) {
+                this.pager.items = data;
+                this.pager.setRange();
+            }
             return this;
         };
         Rtable.prototype._isActiveSort = function (colName) {
             if (colName === this._activeColSort) {
-                return this._styles.activeSortClass || '';
+                return this.styles.activeSortClass || '';
             }
             else {
                 return '';
@@ -265,9 +260,11 @@ var RiotTable;
         };
         Rtable.prototype._lineOver = function (e) {
             this._self._lineFocus = e.item.i;
+            //var p = <Rtable>this.parent;
+            //p._lineFocus = e.item.i;
         };
         Rtable.prototype._activeLine = function (i) {
-            return (i === this._lineFocus ? this._styles.activeLineClass : '');
+            return (i === this._lineFocus ? this.styles.activeLineClass : '');
         };
         Rtable.prototype._click_sort = function (e) {
             var col = e.target.parentElement.getAttribute('data-column');
@@ -278,6 +275,11 @@ var RiotTable;
             if (sortOrder) {
                 this._self.sortTable({ column: col, order: sortOrder[0].sort || 'Up' });
             }
+            //if (!sortOrder) {
+            //    return;
+            //}
+            //var p = <Rtable>this.parent;
+            //p.sortTable({ column: col, order: sortOrder[0].sort || 'Up' });
         };
         //_tableau = function() {
         //    var indice = -1;
