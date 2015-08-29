@@ -79,6 +79,8 @@
     <Content Include="basic.html" />
     <Content Include="index.html" />
     <Content Include="style.css" />
+    <Content Include="stylesheets\github-light.css" />
+    <Content Include="stylesheets\stylesheet.css" />
     <Content Include="test-ts.html" />
     <Content Include="test.html" />
     <Content Include="Web.config" />

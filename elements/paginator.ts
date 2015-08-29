@@ -35,8 +35,9 @@ module RiotTable {
             table.pager = this;
             this.table = table;
 
-            var r = this.getPaginatedItems(this.items, 1);
-            table.opts.data = r.data;
+            //var r = this.getPaginatedItems(this.items, 1);
+            //table.opts.data = r.data;
+
             this.on('pageChange', function(e) {
                 var r = this.getPaginatedItems(this.items, e.page);
                 this.table._data = r.data;

@@ -76,6 +76,7 @@ var RiotTable;
         function Rtable() {
             _super.apply(this, arguments);
             this._data = [];
+            this._dataAll = [];
             this._data_bak = [];
             this._colExcluded = [];
             this._colList = [];
@@ -96,6 +97,15 @@ var RiotTable;
                 return this.pager.items;
             }
             return this._data;
+        };
+        Rtable.prototype.setData = function (data) {
+            if (this.pager) {
+                this.pager.items = data;
+                this.pager.setRange();
+            }
+            else {
+                this._data = data;
+            }
         };
         Rtable.prototype.init = function () {
             var opts = this.opts;
@@ -126,7 +136,7 @@ var RiotTable;
             else {
                 this.loadData(data, cloneData || 'no');
             }
-            // this.filterTable();
+            this.filterTable();
             this.rebuildTable(this.opts['collist']);
             this.sortTable({ column: this._sort.column, order: this._sort.order });
             this.update();
@@ -140,6 +150,8 @@ var RiotTable;
                 this._data = deepCopy(data);
             }
             this._data_bak = this._data;
+            this._dataAll = this._data;
+            this.setData(this._dataAll);
             return this;
         };
         Rtable.prototype.rebuildTable = function (colList) {
@@ -163,22 +175,24 @@ var RiotTable;
             if (this._filter) {
                 var colFilter = this._filter.column, valueFilter = this._filter.value, append = this._filter.append || 'no';
                 if (colFilter === '') {
-                    this._data = this._data_bak;
+                    this.setData(this._dataAll);
                 }
                 else {
                     var pos = valueFilter.indexOf("*");
-                    var dataTofilter = (append === 'yes' ? this._data : this._data_bak);
+                    var dataTofilter = this._dataAll; // (append === 'yes' ? this._data : this._data_bak);
+                    var filtered;
                     if (pos > -1 && pos === valueFilter.length - 1) {
-                        this._data = _.filter(dataTofilter, function (elem) {
+                        filtered = _.filter(dataTofilter, function (elem) {
                             var filval = valueFilter.replace('*', '');
                             return (elem[colFilter].startsWith(filval));
                         });
                     }
                     else {
-                        this._data = _.filter(dataTofilter, function (elem) {
+                        filtered = _.filter(dataTofilter, function (elem) {
                             return (elem[colFilter] == valueFilter);
                         });
                     }
+                    this.setData(filtered);
                 }
             }
             this._cleanData();
@@ -236,10 +250,7 @@ var RiotTable;
                     this._colHeader[i].sort = '';
                 }
             }
-            if (this.pager) {
-                this.pager.items = data;
-                this.pager.setRange();
-            }
+            this.setData(data);
             return this;
         };
         Rtable.prototype._isActiveSort = function (colName) {
@@ -260,8 +271,6 @@ var RiotTable;
         };
         Rtable.prototype._lineOver = function (e) {
             this._self._lineFocus = e.item.i;
-            //var p = <Rtable>this.parent;
-            //p._lineFocus = e.item.i;
         };
         Rtable.prototype._activeLine = function (i) {
             return (i === this._lineFocus ? this.styles.activeLineClass : '');
@@ -275,11 +284,6 @@ var RiotTable;
             if (sortOrder) {
                 this._self.sortTable({ column: col, order: sortOrder[0].sort || 'Up' });
             }
-            //if (!sortOrder) {
-            //    return;
-            //}
-            //var p = <Rtable>this.parent;
-            //p.sortTable({ column: col, order: sortOrder[0].sort || 'Up' });
         };
         //_tableau = function() {
         //    var indice = -1;

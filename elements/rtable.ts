@@ -83,6 +83,7 @@ module RiotTable {
     @template("elements/rtable.html")
     export class Rtable extends Riot.Element {
         private _data = [];
+        private _dataAll = [];
         private _data_bak = [];
         private _filter: Filter;
         private _sort: Sort;
@@ -110,6 +111,15 @@ module RiotTable {
                 return this.pager.items;
             }
             return this._data;
+        }
+        
+        setData(data: any[]) {
+            if (this.pager) {
+                this.pager.items = data;
+                this.pager.setRange();
+            } else {
+                this._data = data;
+            }
         }
 
         init() {
@@ -149,7 +159,7 @@ module RiotTable {
                 this.loadData(data, cloneData || 'no');
             }
 
-            // this.filterTable();
+            this.filterTable();
             this.rebuildTable(this.opts['collist']);
             this.sortTable({ column: this._sort.column, order: this._sort.order });
             this.update();
@@ -163,6 +173,8 @@ module RiotTable {
                 this._data = deepCopy(data);
             }
             this._data_bak = this._data;
+            this._dataAll = this._data;
+            this.setData(this._dataAll);
             return this;
         }
 
@@ -190,21 +202,23 @@ module RiotTable {
                     append = this._filter.append || 'no';
 
                 if (colFilter === '') {
-                    this._data = this._data_bak;
+                    this.setData(this._dataAll);
                 } else {
                     var pos = valueFilter.indexOf("*");
-                    var dataTofilter = (append === 'yes' ? this._data : this._data_bak);
+                    var dataTofilter = this._dataAll; // (append === 'yes' ? this._data : this._data_bak);
+                    var filtered: any[];
 
                     if (pos > -1 && pos === valueFilter.length - 1) {
-                        this._data = _.filter(dataTofilter, (elem) => {
+                        filtered = _.filter(dataTofilter, (elem) => {
                             var filval = valueFilter.replace('*', '');
                             return (elem[colFilter].startsWith(filval));
                         });
                     } else {
-                        this._data = _.filter(dataTofilter, (elem) => {
+                        filtered = _.filter(dataTofilter, (elem) => {
                             return (elem[colFilter] == valueFilter);
                         });
                     }
+                    this.setData(filtered);
                 }
             }
             this._cleanData();
@@ -269,10 +283,7 @@ module RiotTable {
                 }
             }
 
-            if (this.pager) {
-                this.pager.items = data;
-                this.pager.setRange();
-            }
+            this.setData(data);
             return this;
         }
 
@@ -295,8 +306,6 @@ module RiotTable {
 
         private _lineOver(e) {
             this._self._lineFocus = e.item.i;
-            //var p = <Rtable>this.parent;
-            //p._lineFocus = e.item.i;
         }
 
         private _activeLine(i) {
@@ -313,11 +322,6 @@ module RiotTable {
             if (sortOrder) {
                 this._self.sortTable({ column: col, order: sortOrder[0].sort || 'Up' });
             }
-            //if (!sortOrder) {
-            //    return;
-            //}
-            //var p = <Rtable>this.parent;
-            //p.sortTable({ column: col, order: sortOrder[0].sort || 'Up' });
         }
 
         //_tableau = function() {
