@@ -79,7 +79,7 @@ module RiotTable {
     function deepCopy(obj) {
         return _.map(obj, _.clone);
     }
-
+   
     @template("elements/rtable.html")
     export class Rtable extends Riot.Element {
         private _data = [];

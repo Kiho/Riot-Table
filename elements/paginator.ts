@@ -2,6 +2,7 @@
 /// <reference path="rtable.ts" />
 
 module RiotTable {
+
     @template("elements/paginator.html")
     export class Paginator extends Riot.Element {
         total: number;
@@ -20,8 +21,6 @@ module RiotTable {
         }
 
         init(o) {
-            o.table.pager = this;
-            this.table = o.table;
             this.items = o.items;
             this.total = o.total; // total pages
             // this.current = 1          // current page
@@ -30,11 +29,14 @@ module RiotTable {
             for (var i = 1; i <= this.total; i++) this.pages.push(i);
 
             this.setRange();
+        }
+
+        setTable(table: Rtable) {
+            table.pager = this;
+            this.table = table;
 
             var r = this.getPaginatedItems(this.items, 1);
-            o.table.opts.data = r.data;
-            o.table.init();
-
+            table.opts.data = r.data;
             this.on('pageChange', function(e) {
                 var r = this.getPaginatedItems(this.items, e.page);
                 this.table._data = r.data;

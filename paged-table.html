@@ -19,51 +19,52 @@
 
 <body>
 
-<h3>Single</h3>
-<paginator class="b"></paginator>
+    <h3>Single</h3>
+    <paginator class="b"></paginator>
 
-<div class="container">
-    <div class="row">
-        <div class="col-md-12">
-            <rtable id="tab"
-                    styles="tableClass:table table-hover table-condensed, colHeaderClass:header, sortUpClass:glyphicon glyphicon-arrow-up white, sortDownClass:glyphicon glyphicon-arrow-down white"></rtable>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <rtable id="tab"
+                        filter="column: gender, value: female"
+                        styles="tableClass:table table-hover table-condensed, colHeaderClass:header, sortUpClass:glyphicon glyphicon-arrow-up white, sortDownClass:glyphicon glyphicon-arrow-down white"></rtable>
+            </div>
         </div>
     </div>
-</div>
 
-<div id="events" class='group'>events</div>
+    <div id="events" class='group'>events</div>
 
-<script src="bower_components/underscore/underscore-min.js"></script>
-<script type="text/javascript" src="bower_components/riot/riot.js"></script>
-<script type="text/javascript" src="bower_components/riot/compiler.js"></script>
-<script type="text/javascript" src="bower_components/riot-ts/riot-ts.js"></script>
-<script type="text/javascript" src="elements/rtable.js"></script>
-<script type="text/javascript" src="elements/paginator.js"></script>
+    <script src="bower_components/underscore/underscore-min.js"></script>
+    <script type="text/javascript" src="bower_components/riot/riot.js"></script>
+    <script type="text/javascript" src="bower_components/riot/compiler.js"></script>
+    <script type="text/javascript" src="bower_components/riot-ts/riot-ts.js"></script>
+    <script type="text/javascript" src="elements/rtable.js"></script>
+    <script type="text/javascript" src="elements/paginator.js"></script>
 
-<script>
-    var req = new XMLHttpRequest();
-    var url = "data/liste1.json";
-    req.open("GET", url, false);
-    req.send();
+    <script>
+        var req = new XMLHttpRequest();
+        var url = "data/liste1.json";
+        req.open("GET", url, false);
+        req.send();
 
-    if (req.status === 200) {
-        list = JSON.parse(req.responseText);
-        var rtable = riot.mount('rtable#tab', { data: list })[0];
-        var pager = initPager(list, rtable);
-    }
+        if (req.status === 200) {
+            list = JSON.parse(req.responseText);
 
-    function initPager(list, rtable) {
-        var nblocks = 5;
-        var total = list.length;
-        var paginatorSingle = riot.mount('.b', { 'total': total, 'nblocks': nblocks, items: list, table: rtable })[0];
+            var pager = initPager(list, rtable);
+            var rtable = riot.mount('rtable#tab', { pager: pager, data: list })[0];
+        }
 
-        paginatorSingle.on('pageChange', function (e) {
-            events.innerHTML = 'Single paginator event now do something page ' + e.page;
-        });
-        return paginatorSingle;
-    }
-   
-</script>
+        function initPager(list, rtable) {
+            var nblocks = 5;
+            var total = list.length;
+            var paginatorSingle = riot.mount('.b', { 'total': total, 'nblocks': nblocks, items: list, table: rtable })[0];
+
+            paginatorSingle.on('pageChange', function (e) {
+                events.innerHTML = 'Single paginator event now do something page ' + e.page;
+            });
+            return paginatorSingle;
+        }
+    </script>
 
 </body>
 </html> 
