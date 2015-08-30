@@ -68,6 +68,7 @@
     <Content Include="pager.html" />
     <Content Include="README.md" />
     <Content Include="data\liste1.json" />
+    <Content Include="server\run.bat" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
