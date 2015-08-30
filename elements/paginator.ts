@@ -3,10 +3,19 @@
 
 module RiotTable {
 
+    export interface PagedData {
+        page: number;
+        perPage: number;
+        total: number;
+        totalPages: number;
+        data: any[];
+    }
+
     @template("elements/paginator.html")
     export class Paginator extends Riot.Element {
         total: number;
         current: number = 1;
+        perPage: number;
         nblocks: number;
         pages: number[];
         range: number[];
@@ -23,7 +32,8 @@ module RiotTable {
         init(o) {
             this.items = o.items;
             this.total = o.total; // total pages
-            // this.current = 1          // current page
+            this.perPage = o.perPage || 5; // how many items on one page
+            // this.current = 1   // current page
             this.nblocks = o.nblocks; // how many to display
             this.pages = [];
             for (var i = 1; i <= this.total; i++) this.pages.push(i);
@@ -32,31 +42,46 @@ module RiotTable {
         }
 
         setTable(table: Rtable) {
-            table.pager = this;
             this.table = table;
-
-            //var r = this.getPaginatedItems(this.items, 1);
-            //table.opts.data = r.data;
-
-            this.on('pageChange', function(e) {
-                var r = this.getPaginatedItems(this.items, e.page);
-                this.table._data = r.data;
-                this.table.update();
+            this.on('pageChange', function (e) {
+                if (e.table.url) {
+                    e.table.getFromServer(e.page, this.perPage);
+                } else {
+                    var r = this.getPaginatedItems(this.items, e.page);
+                    e.table._data = r.data;
+                    e.table.update();
+                }
             });
         }
 
-        getPaginatedItems(items: any[], p) {
+        getPaginatedItems(items: any[], p): PagedData {
             var page = p || 1,
                 perPage = 5,
                 offset = (page - 1) * perPage,
                 paginatedItems = _.rest(items, offset).slice(0, perPage);
             return {
                 page: page,
-                per_page: perPage,
+                perPage: perPage,
                 total: items.length,
-                total_pages: Math.ceil(items.length / perPage),
+                totalPages: Math.ceil(items.length / perPage),
                 data: paginatedItems
             };
+        }
+
+        updateRange(pager: Paginator, r: PagedData) {
+            pager.pages = [];
+            var count = r.totalPages - r.page;
+            var ncount = count > pager.nblocks ? pager.nblocks : count;
+            var max = ncount + r.page;
+            this.current = r.page;
+            this.total = r.totalPages;
+            for (var i = r.page; i <= max; i++) pager.pages.push(i);
+            pager.items = r.data;
+            if (pager.table.initialized) {
+                // pager.setRange();
+                this.range = this.pages;
+                this.update && this.update();
+            }
         }
 
         setRange() {

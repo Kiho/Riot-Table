@@ -1,4 +1,4 @@
-﻿/// <reference path="../typings/underscore.d.ts" />
+﻿/// <reference path="../typings/underscore/underscore.d.ts" />
 /// <reference path="../bower_components/riot-ts/riot-ts.d.ts" />
 
 module RiotTable {
@@ -95,13 +95,21 @@ module RiotTable {
         private _activeColSort = '';
         private _self: Rtable;
 
+        url: string;
         styles: Styles;
         pager: Paginator;
+        initialized = false;
 
         mounted() {
             this._self = this;
+            this.url = this.opts.url;
             if (this.opts.pager) {
+                this.pager = this.opts.pager;
                 this.opts.pager.setTable(this);
+                if (this.url) {
+                    this.getFromServer(1, this.opts.pager.opts.perPage);
+                    return;
+                }
             }
             this.init();
         }
@@ -119,6 +127,24 @@ module RiotTable {
                 this.pager.setRange();
             } else {
                 this._data = data;
+            }
+        }
+
+        getFromServer(p: number, s: number) {
+            var req = new XMLHttpRequest();
+            req.open("GET", this.url + "/?p=" + p + "&s=" + s, false);
+            req.send();
+
+            if (req.status === 200) {
+                var r = JSON.parse(req.responseText);
+                this.pager.updateRange(this.pager, r);
+                this._data = r.data;
+                if (!this.initialized) {
+                    this.initialized = true;
+                    this.init();
+                } else {
+                    this.update();
+                } 
             }
         }
 
@@ -146,9 +172,12 @@ module RiotTable {
             }
 
             if ((opts.autoload || 'yes') === 'yes') {
-                this.start(null, null);
+                if (this.pager)
+                    this.start(this.pager.items, null);
+                else
+                    this.start(null, null);
             }
-
+            
             return this;
         }
 
@@ -339,13 +368,14 @@ module RiotTable {
         //};
 
         private _formatTable() {
+            var data = this.getData();
             var colExist = false;
-            var keys: string[];
+            var keys: string[] = [];
             if (this._colList.length > 0) {
                 keys = this._colList;
                 colExist = true;
-            } else {
-                keys = Object.keys(this._data[0]);
+            } else if (data.length > 0) {
+                keys = Object.keys(data[0]);
             }
 
             this._colHeader = [];
