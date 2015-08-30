@@ -1,4 +1,4 @@
-/// <reference path="../typings/underscore.d.ts" />
+/// <reference path="../typings/underscore/underscore.d.ts" />
 /// <reference path="../bower_components/riot-ts/riot-ts.d.ts" />
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -84,11 +84,18 @@ var RiotTable;
             this._colTitle = {};
             this._lineFocus = -1;
             this._activeColSort = '';
+            this.initialized = false;
         }
         Rtable.prototype.mounted = function () {
             this._self = this;
+            this.url = this.opts.url;
             if (this.opts.pager) {
+                this.pager = this.opts.pager;
                 this.opts.pager.setTable(this);
+                if (this.url) {
+                    this.getFromServer(1, this.opts.pager.opts.perPage);
+                    return;
+                }
             }
             this.init();
         };
@@ -105,6 +112,23 @@ var RiotTable;
             }
             else {
                 this._data = data;
+            }
+        };
+        Rtable.prototype.getFromServer = function (p, s) {
+            var req = new XMLHttpRequest();
+            req.open("GET", this.url + "/?p=" + p + "&s=" + s, false);
+            req.send();
+            if (req.status === 200) {
+                var r = JSON.parse(req.responseText);
+                this.pager.updateRange(this.pager, r);
+                this._data = r.data;
+                if (!this.initialized) {
+                    this.initialized = true;
+                    this.init();
+                }
+                else {
+                    this.update();
+                }
             }
         };
         Rtable.prototype.init = function () {
@@ -125,7 +149,10 @@ var RiotTable;
                 this._lineOver = null;
             }
             if ((opts.autoload || 'yes') === 'yes') {
-                this.start(null, null);
+                if (this.pager)
+                    this.start(this.pager.items, null);
+                else
+                    this.start(null, null);
             }
             return this;
         };
@@ -298,14 +325,15 @@ var RiotTable;
         //    });
         //};
         Rtable.prototype._formatTable = function () {
+            var data = this.getData();
             var colExist = false;
-            var keys;
+            var keys = [];
             if (this._colList.length > 0) {
                 keys = this._colList;
                 colExist = true;
             }
-            else {
-                keys = Object.keys(this._data[0]);
+            else if (data.length > 0) {
+                keys = Object.keys(data[0]);
             }
             this._colHeader = [];
             for (var i = 0, l = keys.length; i < l; i++) {
