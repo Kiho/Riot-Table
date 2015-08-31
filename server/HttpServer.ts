@@ -4,6 +4,11 @@
 import http = require("http");
 import _ = require("underscore");
 
+interface Filter {
+    column: string;
+    value: string;
+}
+
 function getPaginatedItems(items: any[], p: number, s: number) {
     var page = p || 1,
         perPage = s || 10,
@@ -16,6 +21,32 @@ function getPaginatedItems(items: any[], p: number, s: number) {
         totalPages: Math.ceil(items.length / perPage),
         data: paginatedItems
     };
+}
+
+function sortBy(items: any[], sort): any[]{
+    if (sort) {
+        var list = items;
+        sort = sort.toLowerCase();
+        if (sort.indexOf(" desc") === sort.length - 5) {
+            sort = sort.substring(0, sort.length - 5);
+            // console.log("sortby : desc " + sort);
+            return _.sortBy(items, sort).reverse();
+        } else {
+            if (sort.indexOf(" asc") > 0)
+                sort = sort.substring(0, sort.length - 4);
+            // console.log("sortby : " + sort);
+            return _.sortBy(list, sort);
+        }
+    }
+    return items;
+}
+
+function applyFilter(items: any[], sc: string, st: string): any[] {
+    if (sc && st) {
+        st = st.toLowerCase();
+        return _.filter(items, x => (x[sc] === st));
+    }
+    return items;
 }
 
 var crossDomainHeaders = {
@@ -38,7 +69,10 @@ http.createServer((req, res) => {
             items = JSON.parse(data);    
             console.log("p : " + query.p);
             console.log("s : " + query.s);
-            //console.log('items length: ' + items.length);        
+            
+            //console.log('items length: ' + items.length); 
+            items = applyFilter(items, query.sc, query.st);    
+            items = sortBy(items, query.sortby);   
             var r = getPaginatedItems(items, parseInt(query.p), parseInt(query.s));
             var json = JSON.stringify(r);
             res.writeHead(200, crossDomainHeaders);

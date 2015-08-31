@@ -6,16 +6,13 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css">
     <style>
-        /*.header {
-            background-color: black;
-            color: white;
-        }
-        .white {
-            color: white;
-        }*/
-        #table-tab .col-id {text-align: right; background-color: #C4C4C4;}  
-        #table-tab .header-sortUp {color:green; font-weight:bold} 
-        #table-tab .header-sortDown {color:red; font-weight:bold}
+        #table-tab0 .col-id {text-align: right; background-color: #C4C4C4;}  
+        #table-tab0 .header-sortUp {color:green; font-weight:bold} 
+        #table-tab0 .header-sortDown {color:red; font-weight:bold}
+
+        #table-tab1 .col-id {text-align: right; background-color: #C4C4C4;}  
+        #table-tab1 .header-sortUp {color:green; font-weight:bold} 
+        #table-tab1 .header-sortDown {color:red; font-weight:bold}
     </style>
 </head>
 
@@ -65,14 +62,14 @@
             if (req.status === 200) {
                 list = JSON.parse(req.responseText);
 
-                var pager = initClientPager(list, rtable);
+                var pager = initClientPager(list);
                 var rtable = riot.mount('rtable#tab0', { pager: pager, data: list })[0];
             }
 
-            function initClientPager(list, rtable) {
+            function initClientPager(list) {
                 var nblocks = 5;
                 var total = list.length;
-                var paginator = riot.mount('.a', { 'total': total, 'nblocks': nblocks, items: list, table: rtable })[0];
+                var paginator = riot.mount('.a', { 'total': total, 'nblocks': nblocks, items: list })[0];
 
                 paginator.on('pageChange', function(e) {
                     events.innerHTML = 'Client side paginator event now do something page ' + e.page;
@@ -84,13 +81,13 @@
             if (req.status === 200) {
                 list = JSON.parse(req.responseText);
 
-                var pager = initServerPager(rtable);
+                var pager = initServerPager();
                 var rtable = riot.mount('rtable#tab1', { pager: pager, url: urlPaged })[0];
             }
             
-            function initServerPager(url, rtable) {
+            function initServerPager() {
                 var nblocks = 5;
-                var paginator = riot.mount('.b', { 'nblocks': nblocks, table: rtable })[0];
+                var paginator = riot.mount('.b', { 'nblocks': nblocks })[0];
 
                 paginator.on('pageChange', function (e) {
                     events.innerHTML = 'Server side paginator event now do something page ' + e.page;

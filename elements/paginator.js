@@ -51,7 +51,7 @@ var RiotTable;
             });
         };
         Paginator.prototype.getPaginatedItems = function (items, p) {
-            var page = p || 1, perPage = 5, offset = (page - 1) * perPage, paginatedItems = _.rest(items, offset).slice(0, perPage);
+            var page = (p || 1), perPage = 5, offset = (page - 1) * perPage, paginatedItems = _.rest(items, offset).slice(0, perPage);
             return {
                 page: page,
                 perPage: perPage,

@@ -14,6 +14,36 @@ function getPaginatedItems(items, p, s) {
     };
 }
 
+function sortBy(items, sort) {
+    if (sort) {
+        var list = items;
+        sort = sort.toLowerCase();
+        if (sort.indexOf(" desc") === sort.length - 5) {
+            sort = sort.substring(0, sort.length - 5);
+
+            // console.log("sortby : desc " + sort);
+            return _.sortBy(items, sort).reverse();
+        } else {
+            if (sort.indexOf(" asc") > 0)
+                sort = sort.substring(0, sort.length - 4);
+
+            // console.log("sortby : " + sort);
+            return _.sortBy(list, sort);
+        }
+    }
+    return items;
+}
+
+function applyFilter(items, sc, st) {
+    if (sc && st) {
+        st = st.toLowerCase();
+        return _.filter(items, function (x) {
+            return (x[sc] === st);
+        });
+    }
+    return items;
+}
+
 var crossDomainHeaders = {
     'Content-Type': 'text/plain',
     'Access-Control-Allow-Origin': '*',
@@ -37,6 +67,8 @@ http.createServer(function (req, res) {
             console.log("s : " + query.s);
 
             //console.log('items length: ' + items.length);
+            items = applyFilter(items, query.sc, query.st);
+            items = sortBy(items, query.sortby);
             var r = getPaginatedItems(items, parseInt(query.p), parseInt(query.s));
             var json = JSON.stringify(r);
             res.writeHead(200, crossDomainHeaders);

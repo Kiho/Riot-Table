@@ -132,7 +132,15 @@ module RiotTable {
 
         getFromServer(p: number, s: number) {
             var req = new XMLHttpRequest();
-            req.open("GET", this.url + "/?p=" + p + "&s=" + s, false);
+            var url = this.url + "/?p=" + p + "&s=" + s;
+            if (this._filter)
+                url += "&sc=" + this._filter.column + "&st=" + this._filter.value;
+            if (this._sort) {
+                url += "&sortby=" + this._sort.column;
+                if (this._sort.order === "Down")
+                    url += " desc";
+            }
+            req.open("GET", url, false);
             req.send();
 
             if (req.status === 200) {
@@ -177,7 +185,6 @@ module RiotTable {
                 else
                     this.start(null, null);
             }
-            
             return this;
         }
 
@@ -232,7 +239,11 @@ module RiotTable {
 
                 if (colFilter === '') {
                     this.setData(this._dataAll);
-                } else {
+                }
+                else if (this.url) {
+                    this.getFromServer(this.pager.current, this.pager.perPage);
+                }
+                else {
                     var pos = valueFilter.indexOf("*");
                     var dataTofilter = this._dataAll; // (append === 'yes' ? this._data : this._data_bak);
                     var filtered: any[];
@@ -282,27 +293,36 @@ module RiotTable {
             var colonne = this._sort.column;
             this._activeColSort = colonne;
 
-            var data = this.getData();
-            data = data.sort((elem1, elem2) => {
-                var e1 = elem1[colonne];
-                var e2 = elem2[colonne];
-                if (!isNaN(Number(e1)) && !isNaN(Number(e2))) {
-                    e1 = Number(e1);
-                    e2 = Number(e2);
-                }
+            if (!this.url) {
+                var data = this.getData();
+                data = data.sort((elem1, elem2) => {
+                    var e1 = elem1[colonne];
+                    var e2 = elem2[colonne];
+                    if (!isNaN(Number(e1)) && !isNaN(Number(e2))) {
+                        e1 = Number(e1);
+                        e2 = Number(e2);
+                    }
 
-                if (e1 < e2) {
-                    return (ordre === 'Down' ? 1 : -1);
+                    if (e1 < e2) {
+                        return (ordre === 'Down' ? 1 : -1);
+                    } else {
+                        return (ordre === 'Up' ? 1 : -1);
+                    }
+                });
+                this.setData(data);
+                if (this._sort.order === "Down") {
+                    this._sort.order = 'Up';
                 } else {
-                    return (ordre === 'Up' ? 1 : -1);
-                }
-            });
-
-            if (this._sort.order === "Down") {
-                this._sort.order = 'Up';
+                    this._sort.order = "Down";
+                };
             } else {
-                this._sort.order = "Down";
-            };
+                if (this._sort.order === "Down") {
+                    this._sort.order = 'Up';
+                } else {
+                    this._sort.order = "Down";
+                };
+                this.getFromServer(this.pager.current, this.pager.perPage);
+            }
 
             for (var i = 0, l = this._colHeader.length; i < l; i++) {
                 if (this._colHeader[i].colName === col) {
@@ -312,7 +332,6 @@ module RiotTable {
                 }
             }
 
-            this.setData(data);
             return this;
         }
 

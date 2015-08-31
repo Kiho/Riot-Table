@@ -116,7 +116,15 @@ var RiotTable;
         };
         Rtable.prototype.getFromServer = function (p, s) {
             var req = new XMLHttpRequest();
-            req.open("GET", this.url + "/?p=" + p + "&s=" + s, false);
+            var url = this.url + "/?p=" + p + "&s=" + s;
+            if (this._filter)
+                url += "&sc=" + this._filter.column + "&st=" + this._filter.value;
+            if (this._sort) {
+                url += "&sortby=" + this._sort.column;
+                if (this._sort.order === "Down")
+                    url += " desc";
+            }
+            req.open("GET", url, false);
             req.send();
             if (req.status === 200) {
                 var r = JSON.parse(req.responseText);
@@ -204,6 +212,9 @@ var RiotTable;
                 if (colFilter === '') {
                     this.setData(this._dataAll);
                 }
+                else if (this.url) {
+                    this.getFromServer(this.pager.current, this.pager.perPage);
+                }
                 else {
                     var pos = valueFilter.indexOf("*");
                     var dataTofilter = this._dataAll; // (append === 'yes' ? this._data : this._data_bak);
@@ -247,28 +258,41 @@ var RiotTable;
             var ordre = this._sort.order;
             var colonne = this._sort.column;
             this._activeColSort = colonne;
-            var data = this.getData();
-            data = data.sort(function (elem1, elem2) {
-                var e1 = elem1[colonne];
-                var e2 = elem2[colonne];
-                if (!isNaN(Number(e1)) && !isNaN(Number(e2))) {
-                    e1 = Number(e1);
-                    e2 = Number(e2);
-                }
-                if (e1 < e2) {
-                    return (ordre === 'Down' ? 1 : -1);
+            if (!this.url) {
+                var data = this.getData();
+                data = data.sort(function (elem1, elem2) {
+                    var e1 = elem1[colonne];
+                    var e2 = elem2[colonne];
+                    if (!isNaN(Number(e1)) && !isNaN(Number(e2))) {
+                        e1 = Number(e1);
+                        e2 = Number(e2);
+                    }
+                    if (e1 < e2) {
+                        return (ordre === 'Down' ? 1 : -1);
+                    }
+                    else {
+                        return (ordre === 'Up' ? 1 : -1);
+                    }
+                });
+                this.setData(data);
+                if (this._sort.order === "Down") {
+                    this._sort.order = 'Up';
                 }
                 else {
-                    return (ordre === 'Up' ? 1 : -1);
+                    this._sort.order = "Down";
                 }
-            });
-            if (this._sort.order === "Down") {
-                this._sort.order = 'Up';
+                ;
             }
             else {
-                this._sort.order = "Down";
+                if (this._sort.order === "Down") {
+                    this._sort.order = 'Up';
+                }
+                else {
+                    this._sort.order = "Down";
+                }
+                ;
+                this.getFromServer(this.pager.current, this.pager.perPage);
             }
-            ;
             for (var i = 0, l = this._colHeader.length; i < l; i++) {
                 if (this._colHeader[i].colName === col) {
                     this._colHeader[i].sort = this._sort.order;
@@ -277,7 +301,6 @@ var RiotTable;
                     this._colHeader[i].sort = '';
                 }
             }
-            this.setData(data);
             return this;
         };
         Rtable.prototype._isActiveSort = function (colName) {

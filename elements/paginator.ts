@@ -55,7 +55,7 @@ module RiotTable {
         }
 
         getPaginatedItems(items: any[], p): PagedData {
-            var page = p || 1,
+            var page = (p || 1),
                 perPage = 5,
                 offset = (page - 1) * perPage,
                 paginatedItems = _.rest(items, offset).slice(0, perPage);
