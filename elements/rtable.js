@@ -112,7 +112,7 @@ var RiotTable;
             this._colTitle = {};
             this._lineFocus = -1;
             this._activeColSort = '';
-            this.initialized = false;
+            this._initialized = false;
         }
         Rtable.prototype.mounted = function () {
             this._self = this;
@@ -120,58 +120,28 @@ var RiotTable;
             if (this.opts.pager) {
                 this.pager = this.opts.pager;
                 this.opts.pager.setTable(this);
-                if (this.url) {
-                    this.getFromServer(0, this.opts.pager.opts.perPage);
-                    return;
-                }
             }
             this.init();
         };
-        Rtable.prototype.getData = function () {
-            if (this.pager) {
-                return this.pager.items;
-            }
-            return this._data;
-        };
-        Rtable.prototype.setData = function (data) {
-            if (this.pager) {
-                this.pager.items = data;
-                this.pager.setRange();
-            }
-            else {
-                this._data = data;
-            }
-        };
-        Rtable.prototype.getFromServer = function (p, s) {
-            var _this = this;
-            if (!this.initialized) {
-                if (p === 0)
-                    p = 1;
-                else
-                    return;
-            }
-            var url = this.url + "/?page=" + p + "&size=" + s;
-            if (this._filter)
-                url += "&filter=" + this._filter.column + "&text=" + this._filter.value;
-            if (this._sort) {
-                url += "&sortby=" + this._sort.column;
-                if (this._sort.order === "Down")
-                    url += " desc";
-            }
-            get(url).then(function (response) {
-                var r = JSON.parse(response);
-                _this.pager.updateRange(_this.pager, r);
-                _this._data = r.data;
-                if (!_this.initialized) {
-                    _this.init();
+        Object.defineProperty(Rtable.prototype, "data", {
+            get: function () {
+                if (this.pager) {
+                    return this.pager.items;
+                }
+                return this._data;
+            },
+            set: function (data) {
+                if (this.pager) {
+                    this.pager.items = data;
+                    this.pager.setRange();
                 }
                 else {
-                    _this.update();
+                    this._data = data;
                 }
-            }, function (error) {
-                console.error("Failed!", error);
-            });
-        };
+            },
+            enumerable: true,
+            configurable: true
+        });
         Rtable.prototype.init = function () {
             var opts = this.opts;
             var styles = convertOpts(opts.styles, true);
@@ -190,13 +160,49 @@ var RiotTable;
                 this._lineOver = null;
             }
             if ((opts.autoload || 'yes') === 'yes') {
-                if (this.pager)
-                    this.start(this.pager.items, null);
+                if (this.pager) {
+                    if (this.url) {
+                        this.getServerData(0, this.opts.pager.opts.perPage);
+                    }
+                    else {
+                        this.start(this.pager.items, null);
+                    }
+                }
                 else
                     this.start(null, null);
             }
-            this.initialized = true;
             return this;
+        };
+        Rtable.prototype.getServerData = function (p, s) {
+            var _this = this;
+            if (!this._initialized) {
+                if (p === 0)
+                    p = 1;
+                else
+                    return;
+            }
+            var url = this.url + "/?page=" + p + "&size=" + s;
+            if (this._filter)
+                url += "&filter=" + this._filter.column + "&text=" + this._filter.value;
+            if (this._sort) {
+                url += "&sortby=" + this._sort.column;
+                if (this._sort.order === "Down")
+                    url += " desc";
+            }
+            get(url).then(function (response) {
+                var r = JSON.parse(response);
+                _this.pager.updateRange(_this.pager, r);
+                _this._data = r.data;
+                if (!_this._initialized) {
+                    _this.start(_this.pager.items, null);
+                    _this._initialized = true;
+                }
+                else {
+                    _this.update();
+                }
+            }, function (error) {
+                console.error("Failed!", error);
+            });
         };
         Rtable.prototype.start = function (data, cloneData) {
             if (!data) {
@@ -220,7 +226,7 @@ var RiotTable;
             }
             this._data_bak = this._data;
             this._dataAll = this._data;
-            this.setData(this._dataAll);
+            this.data = this._dataAll;
             return this;
         };
         Rtable.prototype.rebuildTable = function (colList) {
@@ -244,10 +250,10 @@ var RiotTable;
             if (this._filter) {
                 var colFilter = this._filter.column, valueFilter = this._filter.value, append = this._filter.append || 'no';
                 if (colFilter === '') {
-                    this.setData(this._dataAll);
+                    this.data = this._dataAll;
                 }
                 else if (this.url) {
-                    this.getFromServer(this.pager.current, this.pager.perPage);
+                    this.getServerData(this.pager.current, this.pager.perPage);
                 }
                 else {
                     var pos = valueFilter.indexOf("*");
@@ -261,10 +267,10 @@ var RiotTable;
                     }
                     else {
                         filtered = _.filter(dataTofilter, function (elem) {
-                            return (elem[colFilter] == valueFilter);
+                            return (elem[colFilter] === valueFilter);
                         });
                     }
-                    this.setData(filtered);
+                    this.data = filtered;
                 }
             }
             this._cleanData();
@@ -300,7 +306,7 @@ var RiotTable;
             }
             ;
             if (!this.url) {
-                var data = this.getData();
+                var data = this.data;
                 data = data.sort(function (elem1, elem2) {
                     var e1 = elem1[colonne];
                     var e2 = elem2[colonne];
@@ -315,10 +321,10 @@ var RiotTable;
                         return (ordre === 'Up' ? 1 : -1);
                     }
                 });
-                this.setData(data);
+                this.data = data;
             }
             else {
-                this.getFromServer(this.pager.current, this.pager.perPage);
+                this.getServerData(this.pager.current, this.pager.perPage);
             }
             for (var i = 0, l = this._colHeader.length; i < l; i++) {
                 if (this._colHeader[i].colName === col) {
@@ -375,7 +381,7 @@ var RiotTable;
         //    });
         //};
         Rtable.prototype._formatTable = function () {
-            var data = this.getData();
+            var data = this.data;
             var colExist = false;
             var keys = [];
             if (this._colList.length > 0) {

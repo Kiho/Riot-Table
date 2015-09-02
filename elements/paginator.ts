@@ -77,11 +77,9 @@ module RiotTable {
             this.total = r.totalPages;
             for (var i = r.page; i <= max; i++) pager.pages.push(i);
             pager.items = r.data;
-            if (pager.table.initialized) {
-                // pager.setRange();
-                this.range = this.pages;
-                this.update && this.update();
-            }
+
+            this.range = this.pages;
+            this.update && this.update();
         }
 
         setRange() {

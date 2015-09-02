@@ -6,6 +6,8 @@
   "main": "rtable.js",
   "license": "MIT",   
   "dependencies": {
-    "es6-promise": "~3.0.2"
+    "es6-promise": "~3.0.2",
+    "underscore": "~1.8.3",
+    "riot-ts": "~0.0.0"
   }
 }

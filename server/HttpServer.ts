@@ -41,10 +41,10 @@ function sortBy(items: any[], sort): any[]{
     return items;
 }
 
-function applyFilter(items: any[], sc: string, st: string): any[] {
-    if (sc && st) {
-        st = st.toLowerCase();
-        return _.filter(items, x => (x[sc] === st));
+function applyFilter(items: any[], column: string, text: string): any[] {
+    if (column && text) {
+        text = text.toLowerCase();
+        return _.filter(items, x => (x[column].toLowerCase() === text));
     }
     return items;
 }
@@ -69,8 +69,8 @@ http.createServer((req, res) => {
             items = JSON.parse(data);    
             console.log("page : " + query.page);
             console.log("size : " + query.size);
-            
-            //console.log('items length: ' + items.length); 
+            console.log('filter: ' + query.filter + '  text: ' + query.text); 
+
             items = applyFilter(items, query.filter, query.text);    
             items = sortBy(items, query.sortby);   
             var r = getPaginatedItems(items, parseInt(query.page), parseInt(query.size));
