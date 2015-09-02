@@ -64,16 +64,16 @@ http.createServer((req, res) => {
         // console.log('Favicon was requested');
         res.end("");
     } else {
-        fs.readFile('../data/liste1.json', 'utf8', (err, data) => {
+        fs.readFile('./data/liste1.json', 'utf8', (err, data) => {
             if (err) throw err;
             items = JSON.parse(data);    
-            console.log("p : " + query.p);
-            console.log("s : " + query.s);
+            console.log("page : " + query.page);
+            console.log("size : " + query.size);
             
             //console.log('items length: ' + items.length); 
-            items = applyFilter(items, query.sc, query.st);    
+            items = applyFilter(items, query.filter, query.text);    
             items = sortBy(items, query.sortby);   
-            var r = getPaginatedItems(items, parseInt(query.p), parseInt(query.s));
+            var r = getPaginatedItems(items, parseInt(query.page), parseInt(query.size));
             var json = JSON.stringify(r);
             res.writeHead(200, crossDomainHeaders);
             res.end(json);

@@ -1,0 +1,11 @@
+{
+  "name": "RiotTable",
+  "version": "1.0.0",
+  "homepage": "https://github.com/Kiho/Riot-Table",
+  "description": "Riot Table - TypeScript",
+  "main": "rtable.js",
+  "license": "MIT",   
+  "dependencies": {
+    "es6-promise": "~3.0.2"
+  }
+}

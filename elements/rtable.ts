@@ -1,4 +1,5 @@
 ﻿/// <reference path="../typings/underscore/underscore.d.ts" />
+/// <reference path="../typings/es6-promise.d.ts" />
 /// <reference path="../bower_components/riot-ts/riot-ts.d.ts" />
 
 module RiotTable {
@@ -79,7 +80,38 @@ module RiotTable {
     function deepCopy(obj) {
         return _.map(obj, _.clone);
     }
-   
+
+    function get(url) {
+        // Return a new promise.
+        return new Promise<string>((resolve, reject) => {
+            // Do the usual XHR stuff
+            var req = new XMLHttpRequest();
+            req.open('GET', url);
+
+            req.onload = () => {
+                // This is called even on 404 etc
+                // so check the status
+                if (req.status === 200) {
+                    // Resolve the promise with the response text
+                    resolve(req.response);
+                }
+                else {
+                    // Otherwise reject with the status text
+                    // which will hopefully be a meaningful error
+                    reject(Error(req.statusText));
+                }
+            };
+
+            // Handle network errors
+            req.onerror = () => {
+                reject(Error("Network Error"));
+            };
+
+            // Make the request
+            req.send();
+        });
+    }
+
     @template("elements/rtable.html")
     export class Rtable extends Riot.Element {
         private _data = [];
@@ -131,20 +163,18 @@ module RiotTable {
         }
 
         getFromServer(p: number, s: number) {
-            var req = new XMLHttpRequest();
-            var url = this.url + "/?p=" + p + "&s=" + s;
+            // var req = new XMLHttpRequest();
+            var url = this.url + "/?page=" + p + "&size=" + s;
             if (this._filter)
-                url += "&sc=" + this._filter.column + "&st=" + this._filter.value;
+                url += "&filter=" + this._filter.column + "&text=" + this._filter.value;
             if (this._sort) {
                 url += "&sortby=" + this._sort.column;
                 if (this._sort.order === "Down")
                     url += " desc";
             }
-            req.open("GET", url, false);
-            req.send();
 
-            if (req.status === 200) {
-                var r = JSON.parse(req.responseText);
+            get(url).then(response => {
+                var r = JSON.parse(response);
                 this.pager.updateRange(this.pager, r);
                 this._data = r.data;
                 if (!this.initialized) {
@@ -153,7 +183,9 @@ module RiotTable {
                 } else {
                     this.update();
                 } 
-            }
+            }, error => {
+                console.error("Failed!", error);
+            });
         }
 
         init() {

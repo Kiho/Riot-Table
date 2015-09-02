@@ -63,12 +63,15 @@
     <Content Include="basic-ts.html" />
     <Content Include="elements\paginator.html" />
     <Content Include="elements\rtable.html" />
+    <Content Include="gulpfile.js" />
     <Content Include="paged-table.html" />
     <Content Include="pager-ts.html" />
     <Content Include="pager.html" />
     <Content Include="README.md" />
     <Content Include="data\liste1.json" />
     <Content Include="server\run.bat" />
+    <Content Include="package.json" />
+    <Content Include="bower.json" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
@@ -93,6 +96,7 @@
     <TypeScriptCompile Include="elements\paginator.ts" />
     <TypeScriptCompile Include="elements\rtable.ts" />
     <TypeScriptCompile Include="server\HttpServer.ts" />
+    <TypeScriptCompile Include="typings\es6-promise.d.ts" />
     <TypeScriptCompile Include="typings\underscore\underscore.d.ts" />
   </ItemGroup>
   <ItemGroup />
