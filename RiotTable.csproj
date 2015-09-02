@@ -69,7 +69,7 @@
     <Content Include="pager.html" />
     <Content Include="README.md" />
     <Content Include="data\liste1.json" />
-    <Content Include="server\run.bat" />
+    <Content Include="run.bat" />
     <Content Include="package.json" />
     <Content Include="bower.json" />
     <None Include="Web.Debug.config">
@@ -96,7 +96,7 @@
     <TypeScriptCompile Include="elements\paginator.ts" />
     <TypeScriptCompile Include="elements\rtable.ts" />
     <TypeScriptCompile Include="server\HttpServer.ts" />
-    <TypeScriptCompile Include="typings\es6-promise.d.ts" />
+    <TypeScriptCompile Include="typings\es6-promise\es6-promise.d.ts" />
     <TypeScriptCompile Include="typings\underscore\underscore.d.ts" />
   </ItemGroup>
   <ItemGroup />

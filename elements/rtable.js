@@ -1,5 +1,5 @@
 /// <reference path="../typings/underscore/underscore.d.ts" />
-/// <reference path="../typings/es6-promise.d.ts" />
+/// <reference path="../typings/es6-promise/es6-promise.d.ts" />
 /// <reference path="../bower_components/riot-ts/riot-ts.d.ts" />
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -121,7 +121,7 @@ var RiotTable;
                 this.pager = this.opts.pager;
                 this.opts.pager.setTable(this);
                 if (this.url) {
-                    this.getFromServer(1, this.opts.pager.opts.perPage);
+                    this.getFromServer(0, this.opts.pager.opts.perPage);
                     return;
                 }
             }
@@ -144,7 +144,12 @@ var RiotTable;
         };
         Rtable.prototype.getFromServer = function (p, s) {
             var _this = this;
-            // var req = new XMLHttpRequest();
+            if (!this.initialized) {
+                if (p === 0)
+                    p = 1;
+                else
+                    return;
+            }
             var url = this.url + "/?page=" + p + "&size=" + s;
             if (this._filter)
                 url += "&filter=" + this._filter.column + "&text=" + this._filter.value;
@@ -158,7 +163,6 @@ var RiotTable;
                 _this.pager.updateRange(_this.pager, r);
                 _this._data = r.data;
                 if (!_this.initialized) {
-                    _this.initialized = true;
                     _this.init();
                 }
                 else {
@@ -191,6 +195,7 @@ var RiotTable;
                 else
                     this.start(null, null);
             }
+            this.initialized = true;
             return this;
         };
         Rtable.prototype.start = function (data, cloneData) {
@@ -287,6 +292,13 @@ var RiotTable;
             var ordre = this._sort.order;
             var colonne = this._sort.column;
             this._activeColSort = colonne;
+            if (this._sort.order === "Down") {
+                this._sort.order = 'Up';
+            }
+            else {
+                this._sort.order = "Down";
+            }
+            ;
             if (!this.url) {
                 var data = this.getData();
                 data = data.sort(function (elem1, elem2) {
@@ -304,22 +316,8 @@ var RiotTable;
                     }
                 });
                 this.setData(data);
-                if (this._sort.order === "Down") {
-                    this._sort.order = 'Up';
-                }
-                else {
-                    this._sort.order = "Down";
-                }
-                ;
             }
             else {
-                if (this._sort.order === "Down") {
-                    this._sort.order = 'Up';
-                }
-                else {
-                    this._sort.order = "Down";
-                }
-                ;
                 this.getFromServer(this.pager.current, this.pager.perPage);
             }
             for (var i = 0, l = this._colHeader.length; i < l; i++) {

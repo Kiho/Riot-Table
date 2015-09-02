@@ -1,5 +1,5 @@
 ﻿/// <reference path="../typings/underscore/underscore.d.ts" />
-/// <reference path="../typings/es6-promise.d.ts" />
+/// <reference path="../typings/es6-promise/es6-promise.d.ts" />
 /// <reference path="../bower_components/riot-ts/riot-ts.d.ts" />
 
 module RiotTable {
@@ -139,7 +139,7 @@ module RiotTable {
                 this.pager = this.opts.pager;
                 this.opts.pager.setTable(this);
                 if (this.url) {
-                    this.getFromServer(1, this.opts.pager.opts.perPage);
+                    this.getFromServer(0, this.opts.pager.opts.perPage);
                     return;
                 }
             }
@@ -163,7 +163,12 @@ module RiotTable {
         }
 
         getFromServer(p: number, s: number) {
-            // var req = new XMLHttpRequest();
+            if (!this.initialized) {
+                if (p === 0)
+                    p = 1;
+                else
+                    return;
+            }
             var url = this.url + "/?page=" + p + "&size=" + s;
             if (this._filter)
                 url += "&filter=" + this._filter.column + "&text=" + this._filter.value;
@@ -178,7 +183,6 @@ module RiotTable {
                 this.pager.updateRange(this.pager, r);
                 this._data = r.data;
                 if (!this.initialized) {
-                    this.initialized = true;
                     this.init();
                 } else {
                     this.update();
@@ -217,6 +221,8 @@ module RiotTable {
                 else
                     this.start(null, null);
             }
+
+            this.initialized = true;
             return this;
         }
 
@@ -325,6 +331,12 @@ module RiotTable {
             var colonne = this._sort.column;
             this._activeColSort = colonne;
 
+            if (this._sort.order === "Down") {
+                this._sort.order = 'Up';
+            } else {
+                this._sort.order = "Down";
+            };
+
             if (!this.url) {
                 var data = this.getData();
                 data = data.sort((elem1, elem2) => {
@@ -342,20 +354,9 @@ module RiotTable {
                     }
                 });
                 this.setData(data);
-                if (this._sort.order === "Down") {
-                    this._sort.order = 'Up';
-                } else {
-                    this._sort.order = "Down";
-                };
             } else {
-                if (this._sort.order === "Down") {
-                    this._sort.order = 'Up';
-                } else {
-                    this._sort.order = "Down";
-                };
                 this.getFromServer(this.pager.current, this.pager.perPage);
             }
-
             for (var i = 0, l = this._colHeader.length; i < l; i++) {
                 if (this._colHeader[i].colName === col) {
                     this._colHeader[i].sort = this._sort.order;
@@ -422,6 +423,7 @@ module RiotTable {
             var data = this.getData();
             var colExist = false;
             var keys: string[] = [];
+
             if (this._colList.length > 0) {
                 keys = this._colList;
                 colExist = true;

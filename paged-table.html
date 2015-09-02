@@ -47,7 +47,7 @@
         <div id="events" class='group'>events</div>
 
         <script type="text/javascript" src="bower_components/underscore/underscore-min.js"></script>
-        <script type="text/javascript" src="bower_components/es6-promise/es6-promise.js"></script>
+        <script type="text/javascript" src="bower_components/es6-promise/promise.min.js"></script>
         <script type="text/javascript" src="bower_components/riot/riot.js"></script>
         <script type="text/javascript" src="bower_components/riot/compiler.js"></script>
         <script type="text/javascript" src="bower_components/riot-ts/riot-ts.js"></script>
@@ -88,7 +88,7 @@
             
             function initServerPager() {
                 var nblocks = 5;
-                var paginator = riot.mount('.b', { 'nblocks': nblocks })[0];
+                var paginator = riot.mount('.b', { 'nblocks': nblocks, perPage: 6 })[0];
 
                 paginator.on('pageChange', function (e) {
                     events.innerHTML = 'Server side paginator event now do something page ' + e.page;
