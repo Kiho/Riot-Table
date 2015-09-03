@@ -112,7 +112,7 @@ var RiotTable;
             this._colTitle = {};
             this._lineFocus = -1;
             this._activeColSort = '';
-            this._initialized = false;
+            this.initialized = false;
         }
         Rtable.prototype.mounted = function () {
             this._self = this;
@@ -120,6 +120,10 @@ var RiotTable;
             if (this.opts.pager) {
                 this.pager = this.opts.pager;
                 this.opts.pager.setTable(this);
+                if (this.url) {
+                    this.getFromServer(0, this.opts.pager.opts.perPage);
+                    return;
+                }
             }
             this.init();
         };
@@ -142,6 +146,36 @@ var RiotTable;
             enumerable: true,
             configurable: true
         });
+        Rtable.prototype.getFromServer = function (p, s) {
+            var _this = this;
+            if (!this.initialized) {
+                if (p === 0)
+                    p = 1;
+                else
+                    return;
+            }
+            var url = this.url + "/?page=" + p + "&size=" + s;
+            if (this._filter)
+                url += "&filter=" + this._filter.column + "&text=" + this._filter.value;
+            if (this._sort) {
+                url += "&sortby=" + this._sort.column;
+                if (this._sort.order === "Down")
+                    url += " desc";
+            }
+            get(url).then(function (response) {
+                var r = JSON.parse(response);
+                _this.pager.updateRange(_this.pager, r);
+                _this._data = r.data;
+                if (!_this.initialized) {
+                    _this.init();
+                }
+                else {
+                    _this.update();
+                }
+            }, function (error) {
+                console.error("Failed!", error);
+            });
+        };
         Rtable.prototype.init = function () {
             var opts = this.opts;
             var styles = convertOpts(opts.styles, true);
@@ -160,49 +194,13 @@ var RiotTable;
                 this._lineOver = null;
             }
             if ((opts.autoload || 'yes') === 'yes') {
-                if (this.pager) {
-                    if (this.url) {
-                        this.getServerData(0, this.opts.pager.opts.perPage);
-                    }
-                    else {
-                        this.start(this.pager.items, null);
-                    }
-                }
+                if (this.pager)
+                    this.start(this.pager.items, null);
                 else
                     this.start(null, null);
             }
+            this.initialized = true;
             return this;
-        };
-        Rtable.prototype.getServerData = function (p, s) {
-            var _this = this;
-            if (!this._initialized) {
-                if (p === 0)
-                    p = 1;
-                else
-                    return;
-            }
-            var url = this.url + "/?page=" + p + "&size=" + s;
-            if (this._filter)
-                url += "&filter=" + this._filter.column + "&text=" + this._filter.value;
-            if (this._sort) {
-                url += "&sortby=" + this._sort.column;
-                if (this._sort.order === "Down")
-                    url += " desc";
-            }
-            get(url).then(function (response) {
-                var r = JSON.parse(response);
-                _this.pager.updateRange(_this.pager, r);
-                _this._data = r.data;
-                if (!_this._initialized) {
-                    _this.start(_this.pager.items, null);
-                    _this._initialized = true;
-                }
-                else {
-                    _this.update();
-                }
-            }, function (error) {
-                console.error("Failed!", error);
-            });
         };
         Rtable.prototype.start = function (data, cloneData) {
             if (!data) {
@@ -253,7 +251,7 @@ var RiotTable;
                     this.data = this._dataAll;
                 }
                 else if (this.url) {
-                    this.getServerData(this.pager.current, this.pager.perPage);
+                    this.getFromServer(this.pager.current, this.pager.perPage);
                 }
                 else {
                     var pos = valueFilter.indexOf("*");
@@ -267,7 +265,7 @@ var RiotTable;
                     }
                     else {
                         filtered = _.filter(dataTofilter, function (elem) {
-                            return (elem[colFilter] === valueFilter);
+                            return (elem[colFilter] == valueFilter);
                         });
                     }
                     this.data = filtered;
@@ -324,7 +322,7 @@ var RiotTable;
                 this.data = data;
             }
             else {
-                this.getServerData(this.pager.current, this.pager.perPage);
+                this.getFromServer(this.pager.current, this.pager.perPage);
             }
             for (var i = 0, l = this._colHeader.length; i < l; i++) {
                 if (this._colHeader[i].colName === col) {
