@@ -30,9 +30,7 @@ var Riot;
                 args[_i - 1] = arguments[_i];
             }
         };
-        Element.register = function () {
-            registerClass(this);
-        };
+        Element.prototype.mixin = function (mixinObject, instance) { };
         Element.createElement = function (options) {
             var tagName = this.prototype.tagName;
             var el = document.createElement(tagName);
@@ -55,13 +53,12 @@ var Riot;
        Object.keys(element.prototype).forEach((key) => d[key] = element.prototype[key]);
     }
     */
+    Riot.precompiledTags = {};
     function registerClass(element) {
-        function registerTag(template) {
+        function registerTag(compiledTag) {
             var transformFunction = function (opts) {
-                // copies prototype into "this"            
-                extend(this, element);
-                // calls class constructor applying it on "this"
-                element.apply(this, [opts]);
+                extend(this, element); // copies prototype into "this"                        
+                element.apply(this, [opts]); // calls class constructor applying it on "this"
                 if (element.prototype.mounted !== undefined)
                     this.on("mount", this.mounted);
                 if (element.prototype.unmounted !== undefined)
@@ -70,38 +67,42 @@ var Riot;
                     this.on("update", this.updating);
                 if (element.prototype.updated !== undefined)
                     this.on("updated", this.updated);
+                // TODO support for init(opts) ?
             };
-            var compiled = riot.compile(template, true);
-            var r = compiled.indexOf("riot.tag(");
-            var stripped = compiled.substr(r + 9);
-            var x = stripped.lastIndexOf(", function(opts) {");
-            stripped = stripped.substr(0, x);
-            var compiledTemplate = eval("[" + stripped + "]");
-            var tagName = compiledTemplate.length > 0 ? compiledTemplate[0] : "";
-            var html = compiledTemplate.length > 1 ? compiledTemplate[1] : "";
-            var css = compiledTemplate.length > 2 ? compiledTemplate[2] : "";
-            var attr = compiledTemplate.length > 3 ? compiledTemplate[3] : undefined;
-            riot.tag(tagName, html, css, attr, transformFunction);
-            return tagName;
+            riot.tag2(compiledTag.tagName, compiledTag.html, compiledTag.css, compiledTag.attribs, transformFunction, riot.settings.brackets);
+            return compiledTag.tagName;
         }
-        var template;
-        // gets string template, directly, via #id or via http request
-        if (Object.keys(element.prototype).indexOf("template") >= 0) {
-            template = element.prototype.template;
-            if (template.indexOf("<") < 0) {
-                var req = new XMLHttpRequest();
-                // TODO do it asynchronously
-                req.open("GET", template, false);
-                req.send();
-                if (req.status == 200) {
-                    template = req.responseText;
-                    element.prototype.tagName = registerTag(template);
+        function loadTemplateFromHTTP(template) {
+            var req = new XMLHttpRequest();
+            req.open("GET", template, false);
+            req.send();
+            if (req.status == 200)
+                return req.responseText;
+            else
+                throw req.responseText;
+        }
+        ;
+        var compiled;
+        // gets string template: inlined, via http request or via precompiled cache
+        if (element.prototype.template !== undefined) {
+            var tagTemplate = element.prototype.template;
+            if (tagTemplate.indexOf("<") < 0) {
+                // tag is a file
+                if (Riot.precompiledTags[tagTemplate] !== undefined) {
+                    // loads it from precompiled cache                
+                    compiled = Riot.precompiledTags[tagTemplate];
                 }
-                return;
+                else {
+                    // loads from HTTP and compile on the fly
+                    tagTemplate = loadTemplateFromHTTP(tagTemplate);
+                    compiled = riot.compile(tagTemplate, true, { entities: true })[0];
+                }
             }
             else {
-                element.prototype.tagName = registerTag(template);
+                // tag is inlined, compile on the fly
+                compiled = riot.compile(tagTemplate, true, { entities: true })[0];
             }
+            element.prototype.tagName = registerTag(compiled);
         }
         else
             throw "template property not specified";
@@ -112,6 +113,7 @@ var Riot;
 function template(template) {
     return function (target) {
         target.prototype["template"] = template;
+        Riot.registerClass(target);
     };
 }
 //# sourceMappingURL=riot-ts.js.map

@@ -13,34 +13,53 @@
       constructor() {
          riot.observable(this);
       }
-   }
+   }  
 
    export interface Router {
-      (callback: Function);
-      (to: string);                       
+      (callback: Function): void;
+      (filter: string, callback: Function): void;
+      (to: string, title?: string);                       
 
-      start();
+      create(): Router;
+      start(autoExec?: boolean);
       stop();
-      exec(callback: Function);
-      parser(parser: Function);
+      exec();
+      query(): any;
+
+      base(base: string);
+      parser(parser: (path: string)=>string, secondParser?: Function );
    }
 
-   export interface Base {
+   export interface CompilerResult
+   {
+      tagName: string; 
+      html: string; 
+      css: string; 
+      attribs: string;
+      js: string;
+   }      
+   
+   export interface Base 
+   {
       version: string;
       settings: Riot.Settings;
       mount(customTagSelector: string, opts?: any): Array<Riot.Element>;
       mount(selector: string, tagName: string, opts?: any): Array<Riot.Element>;
       mount(domNode: Node, tagName: string, opts?: any): Array<Riot.Element>;
-      render(tagName: string, opts?: any): string;
-      tag(tagName: string, html: string, css?: string, attrs?: string,constructor?: Function);
-      tag(tagName: string, html: string, constructor?: Function);   
+      render(tagName: string, opts?: any): string;            
+      tag(tagName: string, html: string, css: string, attrs: string, constructor: Function);
+      tag2(tagName: string, html: string, css: string, attrs: string, constructor: Function, bpair: string);
       class(element: Function): void;
       observable(object: any): void;
+
+      mixin(mixinName: string, mixinObject: any): void;
       
       compile(callback: Function): void;
       compile(url: string, callback: Function): void;
       compile(tag: string): string;
       compile(tag: string, dontExecute: boolean): string;
+      compile(tag: string, options: any): string;
+      compile(tag: string, dontExecute: boolean, options: any): CompilerResult[];
 
       // TODO server-only methods
    
@@ -53,6 +72,11 @@
       unmounted?(F: Function);
       updating?(F: Function);
       updated?(F: Function);
+   }
+
+   export interface HTMLRiotElement extends HTMLElement
+   {
+      _tag: Element;
    }
 
    export class Element implements Riot.Observable, LifeCycle {
@@ -70,16 +94,13 @@
       one(eventName: string,fun: Function) { }
       off(events: string) {}
       trigger(eventName: string,...args) {}       
+      mixin(mixinObject: Object|Function|string, instance?: any) {}            
 
-      static register() {
-         registerClass(this);
-      } 
-
-      static createElement(options?:any) {
+      static createElement(options?:any): HTMLRiotElement {
          var tagName = (this.prototype as any).tagName;
          var el = document.createElement(tagName);        
          riot.mount(el, tagName, options);   
-         return el;
+         return el as any as HTMLRiotElement;
       }      
    }
    
@@ -98,59 +119,63 @@
    }
    */
 
+   export var precompiledTags: { [fileName: string]: CompilerResult } = {};
+
    export function registerClass(element: Function) {    
       
-      function registerTag(template: string) {
+      function registerTag(compiledTag: CompilerResult) {
 
-         var transformFunction = function (opts) {
-            // copies prototype into "this"            
-            extend(this,element);
-            // calls class constructor applying it on "this"
-            element.apply(this, [opts]);
+         var transformFunction = function (opts) {            
+            extend(this,element);         // copies prototype into "this"                        
+            element.apply(this, [opts]);  // calls class constructor applying it on "this"
+
             if(element.prototype.mounted   !== undefined) this.on("mount"   , this.mounted);
             if(element.prototype.unmounted !== undefined) this.on("unmount" , this.unmounted);
             if(element.prototype.updating  !== undefined) this.on("update"  , this.updating);
             if(element.prototype.updated   !== undefined) this.on("updated" , this.updated);
+
+            // TODO support for init(opts) ?
          };
-         
-         var compiled = riot.compile(template,true);
-         var r = compiled.indexOf("riot.tag(");
-         var stripped = compiled.substr(r+9);
-         var x = stripped.lastIndexOf(", function(opts) {");
-         stripped = stripped.substr(0,x);
+                  
+         riot.tag2(compiledTag.tagName, compiledTag.html, compiledTag.css, compiledTag.attribs, transformFunction, riot.settings.brackets);         
 
-         var compiledTemplate = eval("["+stripped+"]");
-
-         var tagName = compiledTemplate.length>0 ? compiledTemplate[0] : "";
-         var html    = compiledTemplate.length>1 ? compiledTemplate[1] : "";
-         var css     = compiledTemplate.length>2 ? compiledTemplate[2] : "";
-         var attr    = compiledTemplate.length>3 ? compiledTemplate[3] : undefined;
-
-         riot.tag(tagName, html, css, attr, transformFunction);         
-
-         return tagName;
+         return compiledTag.tagName;
       }      
 
-      let template: string;
+      function loadTemplateFromHTTP(template) {
+         var req = new XMLHttpRequest();            
+         req.open("GET", template, false);
+         req.send();
+         if (req.status == 200) return req.responseText;
+         else throw req.responseText;            
+      };
 
-      // gets string template, directly, via #id or via http request
-      if(Object.keys(element.prototype).indexOf("template")>=0) {
-         template = element.prototype.template;
-         if(template.indexOf("<")<0) {
-            var req = new XMLHttpRequest();
-            // TODO do it asynchronously
-            req.open("GET", template, false);
-            req.send();
-            if (req.status == 200) {
-               template = req.responseText;
-               element.prototype.tagName = registerTag(template);
+      let compiled: CompilerResult;
+
+      // gets string template: inlined, via http request or via precompiled cache
+      if(element.prototype.template !== undefined) {
+         let tagTemplate = element.prototype.template;
+         if(tagTemplate.indexOf("<")<0) {
+            // tag is a file
+            if(precompiledTags[tagTemplate]!==undefined) 
+            {
+               // loads it from precompiled cache                
+               compiled = precompiledTags[tagTemplate];
             }
-            return;
+            else 
+            {
+               // loads from HTTP and compile on the fly
+               tagTemplate = loadTemplateFromHTTP(tagTemplate);            
+               compiled = riot.compile(tagTemplate, true, {entities: true})[0];
+            }
          }
-         else 
+         else
          {
-            element.prototype.tagName = registerTag(template);
+            // tag is inlined, compile on the fly
+            compiled = riot.compile(tagTemplate, true, {entities: true})[0];
          }
+
+         element.prototype.tagName = registerTag(compiled);
       }
       else throw "template property not specified";   
    }
@@ -161,7 +186,8 @@ declare var riot: Riot.Base;
 // @template decorator
 function template(template: string) {
 	return function(target: Function) {
-      target.prototype["template"] = template;
+      target.prototype["template"] = template;      
+      Riot.registerClass(target);
    }	
 }
                      

@@ -11,7 +11,7 @@ module RiotTable {
         }
     }
 
-    Raw.register();
+    // Raw.register();
 
     export interface Styles {
         tableClass: string;
@@ -448,5 +448,5 @@ module RiotTable {
         }
     }
 
-    Rtable.register();
+    // Rtable.register();
 }

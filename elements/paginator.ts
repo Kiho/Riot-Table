@@ -119,5 +119,5 @@ module RiotTable {
         }
     }
 
-    Paginator.register();
+    // Paginator.register();
 }

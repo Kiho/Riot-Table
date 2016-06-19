@@ -1,6 +1,6 @@
 {
   "name": "riot-ts",
-  "version": "0.0.12",
+  "version": "0.0.22",
   "homepage": "https://github.com/nippur72/RiotTS",
   "authors": [
     "Antonino Porcino <nino.porcino@gmail.com>"
@@ -15,16 +15,15 @@
     "!README.md"
   ],
   "dependencies": {
-    "riot": "~2.2.3"
+    "riot": "~2.3.11"
   },
-  "_release": "0.0.12",
+  "_release": "0.0.22",
   "_resolution": {
     "type": "version",
-    "tag": "0.0.12",
-    "commit": "9f4b835b4392a6e33405143f065c6b97adb990b0"
+    "tag": "0.0.22",
+    "commit": "b2ff973188c3e87fd6fcb9117ee78e7d9a0d53c9"
   },
   "_source": "git://github.com/nippur72/RiotTS.git",
-  "_target": "~0.0.12",
-  "_originalSource": "riot-ts",
-  "_direct": true
+  "_target": "~0.0.0",
+  "_originalSource": "riot-ts"
 }

@@ -1,105 +1,101 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
-    <head>
-        <title>Example table</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="bower_components/jquery/dist/jquery.min.js"></script>
-        <script src="bower_components/underscore/underscore-min.js"></script>
-        <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
-   </head>
-    <body>
+
+<head>
+    <title>paginator</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css">
+    <style>
+        #table-tab0 .col-id {text-align: right; background-color: #C4C4C4;}  
+        #table-tab0 .header-sortUp {color:green; font-weight:bold} 
+        #table-tab0 .header-sortDown {color:red; font-weight:bold}
+
+        #table-tab1 .col-id {text-align: right; background-color: #C4C4C4;}  
+        #table-tab1 .header-sortUp {color:green; font-weight:bold} 
+        #table-tab1 .header-sortDown {color:red; font-weight:bold}
+    </style>
+</head>
+
+<body>
+    <!-- MAIN CONTENT -->
+<div id="main_content_wrap" class="outer">
+    <section id="main_content" class="inner">
+        <h3>Riot-table</h3>
+        <paginator class="a"></paginator>
+
         <div class="container">
-            <div class="col-md-12">
-                <h1 id="titre">Test Riot.js</h1>
-                <div class="col-md-3">
-                    <button id="refresh" onclick="chargeListe()">Refresh</button>
-                    <button id="Start" onclick="startLecture()">Démarrer</button>
-                    <button id="Stop" onclick="stopLecture()">Stopper</button>
-                </div>
-                
-                <div class="col-md-9">
-                    <div class="col-md-4">
-                        <button id="filtrer" onclick="filtrer()" >Filtrer</button>
-                        <button id="annulerfiltrer" onclick="annulerfiltrer()" >Annuler filtre</button>
-                    </div>
-                    
-                    <div class="col-md-5">
-                        <p>Colonne : <input id="filtreColonne" type="text"/></p>
-                        <p>Valeur : <input id="filtreValeur"  type="text"/></p>
-                    </div>
-                    
-                </div>
-                
+            <div class="row">
                 <div class="col-md-12">
-                <rtable id="tab2" 
-                        data-id="table1" 
-                        colExcluded="id_course, distance" 
-                        sort="column:position,   order:up" 
-                        styles="tableClass:table table-hover table-condensed, colHeaderClass:warning, activeLineClass:active "
-                        ><h2>Liste 1</h2></rtable>
+                    <rtable id="tab0"
+                            filter="column: gender, value: male"
+                            styles="tableClass:table table-hover table-condensed, colHeaderClass:header, sortUpClass:glyphicon glyphicon-arrow-up white, sortDownClass:glyphicon glyphicon-arrow-down white"></rtable>
                 </div>
             </div>
         </div>
-       
-        <script src="bower_components/riot/riot.js"></script>
-        <script src="build/rtable.js"  ></script>
+
+        <paginator class="b"></paginator>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <rtable id="tab1"
+                            filter="column: gender, value: female"
+                            styles="tableClass:table table-hover table-condensed, colHeaderClass:header, sortUpClass:glyphicon glyphicon-arrow-up white, sortDownClass:glyphicon glyphicon-arrow-down white"></rtable>
+                </div>
+            </div>
+        </div>
+
+        <div id="events" class='group'>events</div>
+
+        <script type="text/javascript" src="bower_components/underscore/underscore-min.js"></script>
+        <script type="text/javascript" src="bower_components/es6-promise/promise.min.js"></script>
+        <script type="text/javascript" src="bower_components/riot/riot+compiler.js"></script>
+        <script type="text/javascript" src="bower_components/riot-ts/riot-ts.js"></script>
+        <script type="text/javascript" src="elements/rtable.js"></script>
+        <script type="text/javascript" src="elements/paginator.js"></script>
+
         <script>
+            var req = new XMLHttpRequest();
+            var url = "data/liste1.json";
+            req.open("GET", url, false);
+            req.send();
 
-            var maListe = monter();
-             
-            function startLecture() {
-                 intervalID = setInterval(monter, 5000);
-            }               
+            if (req.status === 200) {
+                list = JSON.parse(req.responseText);
 
-            function stopLecture() {
-                clearInterval(intervalID);
-            }    
-       
-            function monter() {
-              return riot.mount("rtable#tab2"); 
+                var pager = initClientPager(list);
+                var rtable = riot.mount('rtable#tab0', { pager: pager, data: list })[0];
+            }
+
+            function initClientPager(list) {
+                var nblocks = 5;
+                var total = list.length;
+                var paginator = riot.mount('.a', { 'total': total, 'nblocks': nblocks, items: list })[0];
+
+                paginator.on('pageChange', function(e) {
+                    events.innerHTML = 'Client side paginator event now do something page ' + e.page;
+                });
+                return paginator;
+            }
+
+            var urlPaged = "http://localhost:1337";
+            if (req.status === 200) {
+                list = JSON.parse(req.responseText);
+
+                var pager = initServerPager();
+                var rtable = riot.mount('rtable#tab1', { pager: pager, url: urlPaged })[0];
             }
             
-            function filtrer() {
-                maListe[0].filter = {'column' : $('#filtreColonne').val(), 'value' : $('#filtreValeur').val()};
-                maListe[0].filterTable();
-            }
-       
-            function annulerfiltrer() {
-                maListe[0].filter = {'column' : '', 'value' : ''};
-                maListe[0].filterTable();    
-            }       
-       
-            function chargeListe() {
-                $.ajax({
-                    //url: "data/liste1.json",
-                    url:"http://chj/pages/resultats.php?type_cmd=courseParID&type_course=mini&id_course=20150508",
-                    async: true ,
-                    dataType: 'json'
-                })
-                .done(function(data) {
-                    //maListe[0].sort = {column:'age', order:'up'};
-                    for (i=0;i<data.length;i++) {
-                        data.position = Number(data.position);
-                    }
-                    maListe[0].start((data));
-                               
-                 })
-                 .fail(function(e) {
-                     maListe[0].start(Array(e.responseText));
-                     console.log(e);
-                 });
-                
-            }
-            
-            var startLecture = function () {
-                this.intervalID = setInterval(chargeListe, 5000);
-            };             
+            function initServerPager() {
+                var nblocks = 5;
+                var paginator = riot.mount('.b', { 'nblocks': nblocks, perPage: 6 })[0];
 
-            var stopLecture = function () {
-                clearInterval(this.intervalID);
-            };            
-            
+                paginator.on('pageChange', function (e) {
+                    events.innerHTML = 'Server side paginator event now do something page ' + e.page;
+                });
+                return paginator;
+            }
         </script>
-    </body>
-</html>
+    </section>
+</div>
+</body>
+</html> 

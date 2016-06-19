@@ -20,7 +20,8 @@
     <IISExpressAnonymousAuthentication />
     <IISExpressWindowsAuthentication />
     <IISExpressUseClassicPipelineMode />
-    <TypeScriptToolsVersion>1.5</TypeScriptToolsVersion>
+    <TypeScriptToolsVersion>1.8</TypeScriptToolsVersion>
+    <UseGlobalApplicationHostFile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -64,7 +65,7 @@
     <Content Include="elements\paginator.html" />
     <Content Include="elements\rtable.html" />
     <Content Include="gulpfile.js" />
-    <Content Include="paged-table.html" />
+    <Content Include="index.html" />
     <Content Include="pager-ts.html" />
     <Content Include="pager.html" />
     <Content Include="README.md" />
@@ -81,7 +82,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="basic.html" />
-    <Content Include="index.html" />
     <Content Include="style.css" />
     <Content Include="stylesheets\github-light.css" />
     <Content Include="stylesheets\stylesheet.css" />

@@ -1,5 +1,6 @@
 /// <reference path='node.d.ts'/>
 /// <reference path="../typings/underscore/underscore.d.ts" />
+"use strict";
 var http = require("http");
 var _ = require("underscore");
 function getPaginatedItems(items, p, s) {

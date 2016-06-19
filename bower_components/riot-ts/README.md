@@ -5,7 +5,6 @@ Use Muut's [Riot.js](https://muut.com/riotjs/) minimalistic framework from TypeS
 # Table of contents
 
 - [Installation](#install)
-- [Supported features](#features)
 - [How to write elements](#howtowrite)
 - [How to correctly reference in markup](#howtoreference)
 - [The @template decorator](#template)
@@ -14,7 +13,8 @@ Use Muut's [Riot.js](https://muut.com/riotjs/) minimalistic framework from TypeS
 - [Observables](#observables)
 - [Router](#router)
 - [Examples](#examples)
-   - [A timer-based counter element](#timer_example)   
+   - [A timer-based counter element](#timer_example) 
+- [Precompiled tags](#precompiled)  
 - [Running the tests](#repoexample)
 - [Known issues](#knownissues)
 - [Contributing](#contributing)
@@ -35,17 +35,10 @@ You'll get the following files in `bower_components\riot-ts`:
 - `riot-ts.d.ts` the file to reference in your TypeScript code (`/// <reference path="...">`)
 - `riot-ts.ts` the source TypeScript file for debugging purposes
 
-# Supported features <a name="features"></a>                           
-
-- write elements as ES6 classes
-- `@template()` sets template from string or URL
-- `className.register()` registers the element in Riot
-- class constructor receives `options` as parameter
-
 # How to write elements <a name="howtowrite"></a>
 
 Differently from pure [Riot.js](https://muut.com/riotjs/), in RiotTS elements are written 
-as TypeScript classes extending the type `Riot.Element`. 
+as TypeScript classes extending the base type `Riot.Element`. 
 
 There are no external `.tag` files, HTML templates are defined as pure strings or are loaded from `.html` files.
 
@@ -54,8 +47,7 @@ In brief:
 - Write elements as TypeScript classes
 - Extend the `Riot.Element` class 
 - Use `@template` to define the template string or load it from URL
-- register the element in riot via `className.register()`.
-- manually create istances with `className.createElement()`.
+- create instances of the element programmatically with `className.createElement()`.
 
 A class-element:
 - can have private properties/fields
@@ -91,15 +83,11 @@ class MyElement extends Riot.Element
 {
    // ...
 }
-
-// after the element is defined, we register it in Riot
-MyElement.register();
 ```
 
 In `elements/my-element.html`:
 
 ```HTML
-<!-- notice there is no <my-element> tag -->
 <my-element>
    <div>
       This is a my custom element
@@ -126,7 +114,7 @@ riot.mount('*');
 Sets the template for the element. The template parameter can be either:
 
 - a literal string e.g. `"<my-hello><div>hello</div></my-hello>"`
-- an external file ending in `.html` to be loaded syncronously
+- an external file (usually a `.html`) to be loaded via HTTP.
 
 Example of an element `<my-hello>`:
  
@@ -136,6 +124,22 @@ class MyHello extends Riot.Element
 {
 }
 ```
+
+or
+
+```TypeScript
+@template("elements/my-hello.html")
+class MyHello extends Riot.Element
+{
+}
+```
+```
+<my-hello>
+   <div>hello</div>
+</my-hello>
+```
+External tag files are loaded via HTTP requests, which can slow down the startup of very large applications. To avoid this, tags can be precompiled and concatenated into a single javascript file to be loaded more quickly. See how to setup [a grunt task that does this](#precompiled).   
+
 
 # Lifecycle events shortcuts <a name="lifecycle"></a>
 
@@ -269,10 +273,72 @@ class Timer extends Riot.Element {
 Then install the element and mount on the page with:
 
 ```TypeScript
-Timer.register();
-
 riot.mount('*');   // mounts all elements
 ```
+
+# Precompiled tags <a name="precompiled"></a>
+
+To speed up application startup times, tags can be precompiled 
+in order to avoid compiling them at runtime.
+
+Precompiled tags can be also concatenated into a single JavaScript file, 
+avoiding to raise an HTTP request for each tag.
+
+RiotTS can be switched to use precompiled files very easily by 
+just including them (via `<script src="..."></script>`).
+
+If the precompiled file is included, RiotTS will just use it, otherwise
+it will load tags via HTTP and compile them at runtime.
+
+Precompiled files are suggested for production, during development
+it's better to turn them off in order to avoid continually refreshing
+the precompiled file.
+
+Precompiled files are generated with the grunt task `grunt-riotts-precompile`.
+
+How to setup the task:
+
+- First install `grunt-cli`, `grunt` and `grunt-riotts-precompile`:
+```
+$ npm install -g grunt-cli
+$ npm install grunt --save-dev
+$ npm install grunt-riotts-precompile --save-dev
+```
+- Use a `Gruntfiles.js` like this:
+
+```JavaScript
+module.exports = function(grunt) {
+  grunt.initConfig({    
+    // reads all tags in "elements/" and writes to "precompiled-tags.js"
+    precompileTags: {
+        src: ['elements/**/*.html'],
+        dest: 'precompiled-tags.js'
+    }  
+  });
+  
+  grunt.registerTask('default', ['precompileTags']);  
+  grunt.registerTask('off', ['precompileTags:off']);
+  
+  grunt.loadNpmTasks('grunt-riotts-precompile');
+};
+```
+How to run the task according to the above `Gruntfiles.js`:
+
+- from the command line, use `grunt` to create the precompiled file (`precompiled-tags.js`)
+- use `grunt off` to turn off precompilation (will empty `precompiled-tags.js`)
+  
+The generate `precompiled-tags.js` file can be inlined with a `<script>` tag 
+just before loading the element's code, e.g.:
+```HTML
+   <script type="text/javascript" src="precompiled-tags.js"></script>
+   <script type="text/javascript" src="elements/mytag.js"></script>
+```
+Precompiled tags can be easily turned off by just commenting the inclusion:
+```HTML
+   <!-- <script type="text/javascript" src="precompiled-tags.js"></script> -->
+   <script type="text/javascript" src="elements/mytag.js"></script>
+```
+or by just emptying the file `precompiled-tags.js`.
 
 # Running the tests <a name="repoexample"></a>
 
@@ -294,6 +360,22 @@ Contributions are welcome.
 If you find bugs or want to improve it, just send a pull request.
 
 # Change log <a name="changelog"></a>
+- v0.0.22
+  - removed the need for registration, `.register` and `.registerAll` are now removed from the API
+- v0.0.21
+  - aligned router API to riot v2.3.11
+- v0.0.19
+  - support for precompiled tags
+  - deprecated support for "template-cache" in favor of precompiled tags
+- v0.0.18
+  - aligned with Riot's v2.3.11 API
+  - for old Riot v2.2, use RiotTS v0.0.17
+- v0.0.17
+  - support for template-cache
+- v0.0.16
+  - added `Riot.registerAll()` 
+- v0.0.15
+  - support for riot builtin mixins
 - v0.0.11
   - support for property getter/setter
 - v0.0.8
